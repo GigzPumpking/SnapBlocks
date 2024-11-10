@@ -1,20 +1,25 @@
 using UnityEngine;
 
-public class MagneticObject : MonoBehaviour {
+public class MagneticObject : MonoBehaviour
+{
     private bool canCombine = false; // Flag to allow/disallow combination
 
     // Call this method when the object is dropped by the player
-    public void SetCanCombine(bool value) {
+    public void SetCanCombine(bool value)
+    {
         canCombine = value;
     }
 
-    void OnCollisionEnter(Collision collision) {
-        if (canCombine && collision.gameObject.CompareTag("Obstacle")) {
+    void OnCollisionEnter(Collision collision)
+    {
+        if (canCombine && collision.gameObject.CompareTag("Obstacle"))
+        {
             CombineObjects(collision.gameObject);
         }
     }
 
-    void CombineObjects(GameObject otherObject) {
+    void CombineObjects(GameObject otherObject)
+    {
         // Set for one-time combination handling
         canCombine = false;
 
