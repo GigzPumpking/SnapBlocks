@@ -27,18 +27,13 @@ public class Player : MonoBehaviour
             }
         }
 
-        // Handle splitting objects with right click (deleting original object and spawning two of the same objects at half the scale)
+        // Handle splitting objects with right-click (deleting original object and spawning two of the same objects at half the scale)
         if (Input.GetMouseButtonDown(1))
         {
             if (heldObject == null)
             {
                 Ray ray = playerCamera.ScreenPointToRay(Input.mousePosition);
                 RaycastHit hit;
-
-                // Visualize the ray
-                Debug.DrawRay(ray.origin, ray.direction * pickUpRange, Color.red);
-                lineRenderer.SetPosition(0, ray.origin);
-                lineRenderer.SetPosition(1, ray.origin + ray.direction * pickUpRange);
 
                 if (Physics.Raycast(ray, out hit, pickUpRange))
                 {
@@ -48,13 +43,16 @@ public class Player : MonoBehaviour
                         // Calculate the offset for the new objects
                         Vector3 offset = objectHit.transform.right * (objectHit.transform.localScale.x / 4);
 
-                        // Split object into two half-scaled same objects
+                        // Scale factor for the new objects
+                        Vector3 newScale = objectHit.transform.localScale / 1.5f;
+
+                        // Create and position new objects
                         GameObject newObject1 = Instantiate(objectHit, objectHit.transform.position + offset, objectHit.transform.rotation);
-                        newObject1.transform.localScale = objectHit.transform.localScale / 1.5f;
+                        newObject1.transform.localScale = newScale;
                         EnsureRigidbody(newObject1);
 
                         GameObject newObject2 = Instantiate(objectHit, objectHit.transform.position - offset, objectHit.transform.rotation);
-                        newObject2.transform.localScale = objectHit.transform.localScale / 1.5f;
+                        newObject2.transform.localScale = newScale;
                         EnsureRigidbody(newObject2);
 
                         // Optionally, destroy the original object
@@ -64,13 +62,13 @@ public class Player : MonoBehaviour
             }
         }
 
+
         // Call update position if holding an object
         if (heldObject != null)
         {
             UpdateHeldObjectPosition();
         }
     }
-
     void InputHandler()
     {
         float horizontal = Input.GetAxis("Horizontal");
@@ -83,15 +81,10 @@ public class Player : MonoBehaviour
         Ray ray = playerCamera.ScreenPointToRay(Input.mousePosition);
         RaycastHit hit;
 
-        // Visualize the ray
-        Debug.DrawRay(ray.origin, ray.direction * pickUpRange, Color.green);
-        lineRenderer.SetPosition(0, ray.origin);
-        lineRenderer.SetPosition(1, ray.origin + ray.direction * pickUpRange);
-
         if (Physics.Raycast(ray, out hit, pickUpRange))
         {
             GameObject objectHit = hit.collider.gameObject;
-            if (objectHit.CompareTag("Obstacle"))
+            if (objectHit.CompareTag("Obstacle") || objectHit.CompareTag("CombinedObject"))
             {
                 PickUpObject(objectHit);
             }
@@ -102,13 +95,24 @@ public class Player : MonoBehaviour
     {
         heldObject = obj;
         heldObject.GetComponent<Rigidbody>().isKinematic = true; // Disable physics while held
+
+        MagneticObject magneticScript = heldObject.GetComponent<MagneticObject>();
+
+        if (magneticScript != null)
+        {
+            magneticScript.SetCanCombine(false);
+        }
     }
 
     void DropObject()
     {
         if (heldObject != null)
         {
-            heldObject.GetComponent<Rigidbody>().isKinematic = false; // Re-enable physics
+            // if heldObject still has a Rigidbody component
+            if (heldObject.GetComponent<Rigidbody>() != null)
+            {
+                heldObject.GetComponent<Rigidbody>().isKinematic = false; // Re-enable physics
+            }
 
             MagneticObject magneticScript = heldObject.GetComponent<MagneticObject>();
             if (magneticScript != null)
